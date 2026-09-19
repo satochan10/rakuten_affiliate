@@ -17,7 +17,7 @@ cp .env.example .env
 ## 実行
 
 ```bash
-python src/main.py
+python -m src.main
 ```
 
 ## cronでの定期実行
@@ -25,7 +25,7 @@ python src/main.py
 `crontab -e` で以下のように登録する(例: 毎日9時に実行):
 
 ```
-0 9 * * * cd /path/to/05_楽天アフィリエイト && /path/to/venv/bin/python src/main.py >> cron.log 2>&1
+0 9 * * * cd /path/to/05_楽天アフィリエイト && /path/to/venv/bin/python -m src.main >> cron.log 2>&1
 ```
 
 ## テスト

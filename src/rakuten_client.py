@@ -1,6 +1,13 @@
+import logging
+import re
 import time
 
 import requests
+
+logger = logging.getLogger(__name__)
+
+_APPLICATION_ID_RE = re.compile(r"applicationId=[^&\s]+", re.IGNORECASE)
+_AFFILIATE_ID_RE = re.compile(r"affiliateId=[^&\s]+", re.IGNORECASE)
 
 SEARCH_ENDPOINT = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601"
 RANKING_ENDPOINT = "https://app.rakuten.co.jp/services/api/IchibaItem/Ranking/20220601"
@@ -31,6 +38,12 @@ def _parse_item(raw_item: dict, source_keyword: str, source_type: str) -> dict:
     }
 
 
+def _redact_credentials(text: str) -> str:
+    text = _APPLICATION_ID_RE.sub("applicationId=***", text)
+    text = _AFFILIATE_ID_RE.sub("affiliateId=***", text)
+    return text
+
+
 def _request_with_retry(endpoint: str, params: dict) -> dict:
     last_error = None
 
@@ -44,7 +57,21 @@ def _request_with_retry(endpoint: str, params: dict) -> dict:
             if attempt < MAX_RETRIES - 1:
                 time.sleep(BACKOFF_BASE_SECONDS * (2 ** attempt))
 
-    raise RakutenAPIError(f"Rakuten API request failed after {MAX_RETRIES} attempts: {last_error}")
+    redacted_error = _redact_credentials(str(last_error))
+    raise RakutenAPIError(f"Rakuten API request failed after {MAX_RETRIES} attempts: {redacted_error}")
+
+
+def _parse_items(raw_items: list, source_keyword: str, source_type: str) -> list[dict]:
+    items = []
+    for raw in raw_items:
+        try:
+            items.append(_parse_item(raw, source_keyword, source_type))
+        except (KeyError, TypeError) as e:
+            logger.warning(
+                "skipping item with missing/invalid field source=%s type=%s error=%s",
+                source_keyword, source_type, e,
+            )
+    return items
 
 
 def search(application_id: str, affiliate_id: str, keyword: str) -> list[dict]:
@@ -57,7 +84,7 @@ def search(application_id: str, affiliate_id: str, keyword: str) -> list[dict]:
     }
     data = _request_with_retry(SEARCH_ENDPOINT, params)
     raw_items = data.get("Items", [])
-    return [_parse_item(raw, keyword, "search") for raw in raw_items]
+    return _parse_items(raw_items, keyword, "search")
 
 
 def ranking(application_id: str, affiliate_id: str, genre_id: str) -> list[dict]:
@@ -69,4 +96,4 @@ def ranking(application_id: str, affiliate_id: str, genre_id: str) -> list[dict]
     }
     data = _request_with_retry(RANKING_ENDPOINT, params)
     raw_items = data.get("Items", [])
-    return [_parse_item(raw, genre_id, "ranking") for raw in raw_items]
+    return _parse_items(raw_items, genre_id, "ranking")

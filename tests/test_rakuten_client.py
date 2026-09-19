@@ -107,3 +107,56 @@ def test_search_retries_then_succeeds(mock_get, mock_sleep):
 
     assert len(items) == 1
     assert mock_get.call_count == 2
+
+
+@patch("src.rakuten_client.requests.get")
+def test_search_skips_item_with_missing_field_but_keeps_others(mock_get):
+    response = {
+        "Items": [
+            {
+                "Item": {
+                    # itemName is missing - this item should be skipped
+                    "itemCode": "shop:BAD001",
+                    "itemPrice": 999,
+                    "itemUrl": "https://item.rakuten.co.jp/shop/BAD001/",
+                    "affiliateUrl": "https://hb.afl.rakuten.co.jp/bad",
+                    "shopName": "壊れたショップ",
+                }
+            },
+            {
+                "Item": {
+                    "itemCode": "shop:I001",
+                    "itemName": "テストコーヒー豆",
+                    "itemPrice": 1500,
+                    "itemUrl": "https://item.rakuten.co.jp/shop/I001/",
+                    "affiliateUrl": "https://hb.afl.rakuten.co.jp/xxx",
+                    "shopName": "テストショップ",
+                    "mediumImageUrls": [
+                        {"imageUrl": "https://image.rakuten.co.jp/shop/cabinet/I001.jpg"}
+                    ],
+                }
+            },
+        ]
+    }
+    mock_get.return_value = _mock_response(response)
+
+    items = search("app123", "aff456", "コーヒー豆")
+
+    assert len(items) == 1
+    assert items[0]["item_code"] == "shop:I001"
+
+
+@patch("src.rakuten_client.time.sleep", return_value=None)
+@patch("src.rakuten_client.requests.get")
+def test_request_error_message_redacts_credentials(mock_get, mock_sleep):
+    mock_get.side_effect = requests.ConnectionError(
+        "connection failed for https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601"
+        "?applicationId=SECRET123&affiliateId=AFFSECRET456&keyword=coffee"
+    )
+
+    with pytest.raises(RakutenAPIError) as exc_info:
+        search("app123", "aff456", "コーヒー豆")
+
+    message = str(exc_info.value)
+    assert "SECRET123" not in message
+    assert "AFFSECRET456" not in message

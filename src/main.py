@@ -1,4 +1,5 @@
 import logging
+import sys
 import time
 
 from src.config import load_config
@@ -59,6 +60,9 @@ def main():
         )
     finally:
         conn.close()
+
+    if result["errors"] > 0 and result["inserted"] == 0 and result["updated"] == 0:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
