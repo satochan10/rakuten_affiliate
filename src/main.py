@@ -26,7 +26,13 @@ def run(config, conn, search_fn=search, ranking_fn=ranking, sleep_fn=time.sleep)
 
     for keyword in config.keywords:
         try:
-            items = search_fn(config.application_id, config.affiliate_id, keyword)
+            items = search_fn(
+                config.application_id,
+                config.affiliate_id,
+                config.access_key,
+                config.allowed_website,
+                keyword,
+            )
             all_items.extend(items)
             logger.info("search keyword=%s items=%d", keyword, len(items))
         except RakutenAPIError as e:
@@ -36,7 +42,13 @@ def run(config, conn, search_fn=search, ranking_fn=ranking, sleep_fn=time.sleep)
 
     for genre_id in config.genre_ids:
         try:
-            items = ranking_fn(config.application_id, config.affiliate_id, genre_id)
+            items = ranking_fn(
+                config.application_id,
+                config.affiliate_id,
+                config.access_key,
+                config.allowed_website,
+                genre_id,
+            )
             all_items.extend(items)
             logger.info("ranking genre_id=%s items=%d", genre_id, len(items))
         except RakutenAPIError as e:

@@ -56,7 +56,7 @@ def _mock_response(json_data, status_code=200):
 def test_search_returns_parsed_items(mock_get):
     mock_get.return_value = _mock_response(SEARCH_RESPONSE)
 
-    items = search("app123", "aff456", "コーヒー豆")
+    items = search("app123", "aff456", "accesskey789", "example.com", "コーヒー豆")
 
     assert len(items) == 1
     item = items[0]
@@ -75,7 +75,7 @@ def test_search_returns_parsed_items(mock_get):
 def test_ranking_returns_parsed_items(mock_get):
     mock_get.return_value = _mock_response(RANKING_RESPONSE)
 
-    items = ranking("app123", "aff456", "100227")
+    items = ranking("app123", "aff456", "accesskey789", "example.com", "100227")
 
     assert len(items) == 1
     item = items[0]
@@ -90,7 +90,7 @@ def test_search_retries_then_raises_on_persistent_failure(mock_get, mock_sleep):
     mock_get.side_effect = requests.ConnectionError("boom")
 
     with pytest.raises(RakutenAPIError):
-        search("app123", "aff456", "コーヒー豆")
+        search("app123", "aff456", "accesskey789", "example.com", "コーヒー豆")
 
     assert mock_get.call_count == 3
 
@@ -103,7 +103,7 @@ def test_search_retries_then_succeeds(mock_get, mock_sleep):
         _mock_response(SEARCH_RESPONSE),
     ]
 
-    items = search("app123", "aff456", "コーヒー豆")
+    items = search("app123", "aff456", "accesskey789", "example.com", "コーヒー豆")
 
     assert len(items) == 1
     assert mock_get.call_count == 2
@@ -140,7 +140,7 @@ def test_search_skips_item_with_missing_field_but_keeps_others(mock_get):
     }
     mock_get.return_value = _mock_response(response)
 
-    items = search("app123", "aff456", "コーヒー豆")
+    items = search("app123", "aff456", "accesskey789", "example.com", "コーヒー豆")
 
     assert len(items) == 1
     assert items[0]["item_code"] == "shop:I001"
@@ -150,13 +150,14 @@ def test_search_skips_item_with_missing_field_but_keeps_others(mock_get):
 @patch("src.rakuten_client.requests.get")
 def test_request_error_message_redacts_credentials(mock_get, mock_sleep):
     mock_get.side_effect = requests.ConnectionError(
-        "connection failed for https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601"
-        "?applicationId=SECRET123&affiliateId=AFFSECRET456&keyword=coffee"
+        "connection failed for https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701"
+        "?applicationId=SECRET123&accessKey=KEYSECRET789&affiliateId=AFFSECRET456&keyword=coffee"
     )
 
     with pytest.raises(RakutenAPIError) as exc_info:
-        search("app123", "aff456", "コーヒー豆")
+        search("app123", "aff456", "accesskey789", "example.com", "コーヒー豆")
 
     message = str(exc_info.value)
     assert "SECRET123" not in message
     assert "AFFSECRET456" not in message
+    assert "KEYSECRET789" not in message

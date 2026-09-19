@@ -9,7 +9,12 @@ python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-# .env を編集し、RAKUTEN_APPLICATION_ID / RAKUTEN_AFFILIATE_ID を設定
+# .env を編集し、RAKUTEN_APPLICATION_ID / RAKUTEN_AFFILIATE_ID / RAKUTEN_ACCESS_KEY /
+# RAKUTEN_ALLOWED_WEBSITE を設定する。
+# いずれもRakuten Developers (https://webservice.rakuten.co.jp/) の
+# 対象アプリの管理画面で確認できる。RAKUTEN_ALLOWED_WEBSITEは
+# アプリ設定の「Allowed websites」に登録したドメイン(例: example.com)と
+# 一致させること。一致しないとAPIから403 HTTP_REFERRER_NOT_ALLOWEDが返る。
 ```
 
 `keywords.yaml` を編集し、検索したいキーワード・ジャンルIDを設定する。

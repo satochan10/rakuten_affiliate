@@ -8,6 +8,8 @@ def test_load_config_success(tmp_path, monkeypatch):
     env_file.write_text(
         "RAKUTEN_APPLICATION_ID=app123\n"
         "RAKUTEN_AFFILIATE_ID=aff456\n"
+        "RAKUTEN_ACCESS_KEY=key789\n"
+        "RAKUTEN_ALLOWED_WEBSITE=example.com\n"
     )
     keywords_file = tmp_path / "keywords.yaml"
     keywords_file.write_text(
@@ -21,15 +23,35 @@ def test_load_config_success(tmp_path, monkeypatch):
 
     assert config.application_id == "app123"
     assert config.affiliate_id == "aff456"
+    assert config.access_key == "key789"
+    assert config.allowed_website == "example.com"
     assert config.keywords == ["コーヒー豆"]
     assert config.genre_ids == ["100227"]
 
 
 def test_load_config_missing_application_id_raises(tmp_path):
     env_file = tmp_path / ".env"
-    env_file.write_text("RAKUTEN_AFFILIATE_ID=aff456\n")
+    env_file.write_text(
+        "RAKUTEN_AFFILIATE_ID=aff456\n"
+        "RAKUTEN_ACCESS_KEY=key789\n"
+        "RAKUTEN_ALLOWED_WEBSITE=example.com\n"
+    )
     keywords_file = tmp_path / "keywords.yaml"
     keywords_file.write_text("keywords: []\ngenre_ids: []\n")
 
     with pytest.raises(ConfigError, match="RAKUTEN_APPLICATION_ID"):
+        load_config(env_path=str(env_file), keywords_path=str(keywords_file))
+
+
+def test_load_config_missing_access_key_raises(tmp_path):
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "RAKUTEN_APPLICATION_ID=app123\n"
+        "RAKUTEN_AFFILIATE_ID=aff456\n"
+        "RAKUTEN_ALLOWED_WEBSITE=example.com\n"
+    )
+    keywords_file = tmp_path / "keywords.yaml"
+    keywords_file.write_text("keywords: []\ngenre_ids: []\n")
+
+    with pytest.raises(ConfigError, match="RAKUTEN_ACCESS_KEY"):
         load_config(env_path=str(env_file), keywords_path=str(keywords_file))
