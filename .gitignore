@@ -1,1 +1,7 @@
 .worktrees/
+.env
+products.db
+app.log
+__pycache__/
+*.pyc
+.pytest_cache/

@@ -1,0 +1,10 @@
+# 商品検索キーワード(IchibaItem/Search API)
+keywords:
+  - "コーヒー豆"
+  - "ワイヤレスイヤホン"
+
+# ジャンル別ランキング取得対象(IchibaItem/Ranking API)
+# ジャンルIDは https://webservice.rakuten.co.jp/explorer/api/IchibaGenre/Search/ 等で調べられる
+genre_ids:
+  - "100227"  # 食品
+  - "565571"  # 家電
