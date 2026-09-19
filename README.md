@@ -72,6 +72,15 @@ python -m src.main
 sqlite3 products.db "SELECT item_code, item_name, price FROM items LIMIT 10;"
 ```
 
+## HTMLで一覧表示
+
+`products.db` の中身を `products.html` として書き出し、ブラウザで見た目付きで確認できる。
+
+```bash
+python -m src.export_html
+open products.html   # macOSの場合。生成されたファイルをブラウザで開く
+```
+
 ## cronでの定期実行
 
 `crontab -e` で以下のように登録する(例: 毎日9時に実行):
